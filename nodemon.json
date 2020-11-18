@@ -1,0 +1,6 @@
+{
+  "verbose": true,
+  "exec": "ts-node src/server.ts",
+  "watch": ["**/*.js", "**/*.ts", "**/*.json", "**/*.graphql"],
+  "ext": "js, ts, json, graphql"
+}

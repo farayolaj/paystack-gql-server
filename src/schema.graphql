@@ -1,0 +1,616 @@
+"""
+The Meta type is used to provide context for the data returned
+"""
+type Meta {
+  """
+  The total number of records that match the query
+  """
+  total: Int!
+  """
+  The number of records skipped
+  """
+  skipped: Int!
+  """
+  The number of records on a page
+  """
+  perPage: Int!
+  """
+  The currently returned page
+  """
+  page: Int!
+  """
+  The total number of pages available
+  """
+  pageCount: Int!
+}
+
+input FilterInput {
+  """
+  A timestamp from which to start listing transaction e.g. `2016-09-24T00:00:05.000Z`, `2016-09-21`
+  """
+  from: String
+  """
+  A timestamp at which to stop listing transaction e.g. `2016-09-24T00:00:05.000Z`, `2016-09-21`
+  """
+  to: String
+}
+
+input PagingInput {
+  """
+  Specify how many records you want to retrieve per page.
+  """
+  perPage: Int = 50
+  """
+  Specify exactly what page you want to retrieve.
+  """
+  page: Int = 1
+}
+
+input MetadataInput {
+  customFields: [CustomFieldInput!]!
+}
+
+type Metadata {
+  photos: [PhotoMetadata!]
+  customFields: [CustomField!]
+  referrer: String
+}
+
+input CustomFieldInput {
+  displayName: String
+  variableName: String
+  value: String
+}
+
+type CustomField {
+  displayName: String
+  variableName: String
+  value: String
+}
+
+type PhotoMetadata {
+  type: String
+  typeId: String
+  typeName: String
+  url: String
+  isPrimary: Boolean
+}
+
+type Identification {
+  country: String
+  type: String
+  value: String
+}
+
+enum RiskAction {
+  default
+  allow
+  deny
+}
+
+type Authorization {
+  authorizationCode: String
+  cardType: String
+  last4: String
+  expMonth: String
+  expYear: String
+  bin: String
+  bank: String
+  channel: String
+  signature: String
+  reusable: Boolean
+  countryCode: String
+  accountName: String
+}
+
+type Customer {
+  id: ID
+  firstName: String
+  lastName: String
+  email: String
+  phone: String
+  metadata: Metadata
+  customerCode: String
+  domain: String
+  authorizations: [Authorization!]
+  transactions: [Transaction!]
+  subscriptions: [PSubscription!]
+  identified: Boolean
+  identifications: [Identification!]
+  createdAt: String
+  updatedAt: String
+  riskAction: RiskAction
+}
+
+type Transaction {
+  id: ID!
+  domain: String
+  status: TransactionStatus
+  reference: String
+  amount: Int
+  message: String
+  gatewayResponse: String
+  paidAt: String #date - may need to declare custom scalar
+  createdAt: String #date
+  channel: String
+  currency: String
+  ipAddress: String
+  metadata: Metadata
+  timeline: String #check
+  customer: Customer
+  authorization: Authorization #check
+  plan: Plan #check
+  fees: Int
+  feeSplit: String #check
+  requestedAmount: Int
+  transactionDate: String #date
+  log: TransactionLog
+}
+
+type TransactionLog {
+  startTime: Int #time
+  timeSpent: Int #time
+  attempts: Int
+  errors: Int
+  authentication: String #check
+  channel: String
+  success: Boolean
+  mobile: Boolean
+  input: [String!]
+  history: [TransactionHistory!]
+}
+
+type TransactionHistory {
+  type: String
+  message: String
+  time: Int
+}
+
+type TransactionTotals {
+  totalTransactions: Int
+  uniqueCustomers: Int
+  totalVolume: Int
+  totalVolumeByCurrency: [Currency!]
+  pendingTransfers: Int
+  pendingTransfersByCurrency: [Currency!]
+}
+
+type Currency {
+  currency: String
+  amount: Int
+}
+
+type PSubscription {
+  id: ID
+  customer: Customer
+  plan: Plan
+  integration: Int
+  authorization: Authorization
+  domain: String
+  start: Int
+  status: String
+  quantity: Int
+  amount: Int
+  subscriptionCode: String
+  emailToken: String
+  easyCronId: String
+  cronExpression: String
+  nextPaymentDate: String #date
+  openInvoice: String
+  createdAt: String #date
+  updatedAt: String #date
+}
+
+type Plan {
+  id: ID
+  subscriptions: [PSubscription!]
+  integration: Int
+  domain: String
+  name: String
+  planCode: String
+  description: String
+  amount: Int
+  interval: String
+  sendInvoices: Boolean
+  sendSms: Boolean
+  hostedPage: Boolean
+  hostedPageUrl: String
+  hostedPageSummary: String
+  currency: String
+  createdAt: String #date
+  updatedAt: String #date
+}
+
+enum TransactionStatus {
+  failed
+  success
+  abandoned
+}
+
+enum TransactionChannel {
+  card
+  bank
+  ussd
+  qr
+  mobile_money
+  bank_transfer
+}
+
+enum TransactionBearer {
+  subaccount
+  account
+}
+
+type TransactionInitialization {
+  authorizationUrl: String
+  accessCode: String
+  reference: String
+}
+
+type InitializeTransactionResponse implements Response {
+  status: Boolean!
+  statusCode: Int!
+  message: String!
+  data: TransactionInitialization
+}
+
+input InitializeTransactionInput {
+  """
+  Amount should be in `kobo` if currency is NGN and `pesewas` for GHS
+  """
+  amount: String!
+  """
+  Customer's email address
+  """
+  email: String!
+  """
+  The transaction currency (NGN, GHS or USD). Defaults to your integration currency.
+  """
+  currency: String
+  """
+  Unique transaction reference. Only `-`, `.`, `=` and alphanumeric characters allowed.
+  """
+  reference: String
+  """
+  Fully qualified url, e.g. https://example.com/.
+  Use this to override the callback url provided on the dashboard for this transaction
+  """
+  callbackUrl: String
+  """
+  If transaction is to create a subscription to a predefined plan, provide plan code here.
+  This would invalidate the value provided in `amount`
+  """
+  plan: String
+  """
+  Number of times to charge customer during subscription to plan
+  """
+  invoiceLimit: Int
+  """
+  Stringified JSON object.
+  Add a `custom_fields` attribute which has a list of objects
+  if you would like the fields to be added to your transaction
+  when displayed on the dashboard.
+  """
+  metadata: MetadataInput
+  """
+  An array of payment channels to control what channels you want
+  to make available to the user to make a payment with.
+  """
+  channels: [TransactionChannel!]
+  """
+  The split code of the transaction split. e.g. `SPL_98WF13Eb3w`
+  """
+  splitCode: String
+  """
+  The code for the subaccount that owns the payment. e.g. `ACCT_8f4s1eq7ml6rlzj`
+  """
+  subaccount: String
+  """
+  A flat fee to charge the subaccount for this transaction,
+  in kobo if currency is `NGN` and pesewas if currency is `GHS`.
+  This overrides the split percentage set when the subaccount was created.
+  Ideally, you will need to use this if you are splitting in flat rates
+  (since subaccount creation only allows for percentage split).
+  e.g. `7000` for a 70 naira flat fee.
+  """
+  transactionCharge: Int
+  """
+  Who bears Paystack charges?
+  """
+  bearer: TransactionBearer = account
+}
+
+type TransactionResponse implements Response {
+  statusCode: Int!
+  status: Boolean!
+  message: String!
+  data: Transaction
+}
+
+input AllTransactionsInput {
+  """
+  Specify an ID for the customer whose transactions you want to retrieve
+  """
+  customer: String
+  """
+  Filter transactions by status ('failed', 'success', 'abandoned')
+  """
+  status: TransactionStatus
+  """
+  Filter transactions by amount.
+  Specify the amount, in kobo if currency is `NGN` and pesewas if currency is `GHS`
+  """
+  amount: Int
+}
+
+type TransactionListResponse implements Response {
+  statusCode: Int!
+  status: Boolean!
+  message: String!
+  meta: Meta
+  data: [Transaction!]
+}
+
+input ChargeAuthorizationInput {
+  """
+  Amount should be in kobo if currency is NGN and pesewas for GHS
+  """
+  amount: String!
+  """
+  Customer's email address
+  """
+  email: String!
+  """
+  Valid authorization code to charge
+  """
+  authorizationCode: String!
+  """
+  Unique transaction reference. Only -, ., = and alphanumeric characters allowed.
+  """
+  reference: String
+  """
+  Currency in which amount should be charged
+  """
+  currency: String
+  """
+  Stringified JSON object.
+  Add a custom_fields attribute which has an
+  array of objects if you would like the fields to be
+  added to your transaction when displayed on the dashboard.
+  """
+  metadata: MetadataInput
+  """
+  Send us 'card' or 'bank' or 'card','bank'
+  as an array to specify what options to show the user paying
+  """
+  channels: [TransactionChannel!]
+  """
+  The code for the subaccount that owns the payment. e.g. ACCT_8f4s1eq7ml6rlzj
+  """
+  subaccount: String
+  """
+  A flat fee to charge the subaccount for this transaction,
+  in kobo if currency is NGN and pesewas if currency is GHS.
+  This overrides the split percentage set when the subaccount was created.
+  Ideally, you will need to use this if you are splitting in flat rates
+  (since subaccount creation only allows for percentage split). e.g. 7000 for a 70 naira flat fee.
+  """
+  transaction_charge: Int
+  """
+  Who bears Paystack charges? account or subaccount (defaults to account).
+  """
+  bearer: TransactionBearer
+  """
+  If you are making a scheduled charge call,
+  it is a good idea to queue them so the processing system does not get overloaded
+  causing transaction processing errors.
+  Send queue: true to take advantage of our queued charging.
+  """
+  queue: Boolean
+}
+
+input CheckAuthorizationInput {
+  """
+  Amount should be in kobo if currency is NGN and pesewas for GHS
+  """
+  amount: String
+  """
+  Customer's email address
+  """
+  email: String
+  """
+  Valid authorization code to charge
+  """
+  authorizationCode: String
+  """
+  Currency in which amount should be charged
+  """
+  currency: String
+}
+
+type CheckAuthorizationResponse implements Response {
+  statusCode: Int!
+  status: Boolean!
+  message: String!
+  data: Currency
+}
+
+type TimelineResponse implements Response {
+  statusCode: Int!
+  status: Boolean!
+  message: String!
+  data: TransactionLog
+}
+
+type TransactionTotal {
+  totalTransactions: Int
+  uniqueCustomers: Int
+  totalVolume: Int
+  totalVolumeByCurrency: [Currency!]
+  pendingTransfers: Int
+  pendingTransfersByCurrency: [Currency!]
+}
+
+type TransactionTotalResponse implements Response {
+  statusCode: Int!
+  status: Boolean!
+  message: String!
+  data: TransactionTotal
+}
+
+input ExportTransactionsInput {
+  """
+  Specify an ID for the customer whose transactions you want to retrieve
+  """
+  customer: Int
+  """
+  Filter transactions by status ('failed', 'success', 'abandoned')
+  """
+  status: TransactionStatus
+  """
+  Specify the transaction currency to export
+  """
+  currency: String
+  """
+  Filter transactions by amount. Specify the amount, in kobo if currency is NGN and pesewas if currency is GHS.
+  """
+  amount: Int
+  """
+  Set to true to export only settled transactions. false for pending transactions. Leave undefined to export all transactions
+  """
+  settled: Boolean
+  """
+  An ID for the settlement whose transactions we should export
+  """
+  settlement: Int
+  """
+  Specify a payment page's id to export only transactions conducted on said page
+  """
+  paymentPage: Int
+}
+
+type ExportTransactions {
+  path: String
+}
+
+type ExportTransactionsResponse implements Response {
+  statusCode: Int!
+  status: Boolean!
+  message: String!
+  data: ExportTransactions
+}
+
+input PartialDebitInput {
+  """
+  Authorization Code
+  """
+  authorization: String
+  """
+  Specify the currency you want to debit
+  """
+  currency: String
+  """
+  Amount should be in kobo if currency is NGN and pesewas for GHS
+  """
+  amount: String
+  """
+  Customer's email address (attached to the authorization code)
+  """
+  email: String
+  """
+  Unique transaction reference. Only -, ., = and alphanumeric characters allowed.
+  """
+  reference: String
+  """
+  Minimum amount to charge
+  """
+  atLeast: String
+}
+
+interface Response {
+  statusCode: Int!
+  status: Boolean!
+  message: String!
+}
+
+type Query {
+  """
+  Confirm the status of a transaction
+  """
+  verifyTransaction(
+    """
+    The transaction reference used to intiate the transaction
+    """
+    reference: String
+  ): TransactionResponse!
+  """
+  List transactions carried out on your integration.
+  """
+  allTransactions(
+    paging: PagingInput
+    filter: FilterInput
+    options: AllTransactionsInput
+  ): TransactionListResponse!
+  """
+  Get details of a transaction carried out on your integration.
+  """
+  transaction(
+    """
+    Transaction id
+    """
+    id: ID!
+  ): TransactionResponse!
+  """
+  View the timeline of a transaction using its id or reference
+  """
+  timeline(id: String, reference: String): TimelineResponse!
+  """
+  Total amount received on your account
+  """
+  transactionTotals(
+    paging: PagingInput
+    filter: FilterInput
+  ): TransactionTotalResponse!
+  """
+  List transactions carried out on your integration.
+  """
+  exportTransactions(
+    paging: PagingInput
+    filter: FilterInput
+    options: ExportTransactionsInput
+  ): ExportTransactionsResponse!
+}
+
+type Mutation {
+  """
+  Initialize a transaction from your backend
+  """
+  initializeTransaction(
+    options: InitializeTransactionInput
+  ): InitializeTransactionResponse!
+  chargeAuthorization(options: ChargeAuthorizationInput): TransactionResponse!
+  """
+  All mastercard and visa authorizations can be checked with this endpoint
+  to know if they have funds for the payment you seek.
+
+  This endpoint should be used when you do not know the exact
+  amount to charge a card when rendering a service.
+  It should be used to check if a card has enough funds based on a maximum range value.
+  It is well suited for:
+  - Ride hailing services
+  - Logistics services
+
+    Warning
+    You shouldn't use this endpoint to check a card for sufficient
+    funds if you are going to charge the user immediately.
+    This is because we hold funds when this endpoint is called
+    which can lead to an insufficient funds error.
+  """
+  checkAuthorization(
+    options: CheckAuthorizationInput
+  ): CheckAuthorizationResponse!
+  """
+  Retrieve part of a payment from a customer
+  """
+  partialDebit(options: PartialDebitInput): TransactionResponse!
+}
