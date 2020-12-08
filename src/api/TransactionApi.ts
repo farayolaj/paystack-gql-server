@@ -7,7 +7,7 @@ const ApiInstance = axios.create({
 });
 
 export async function initializeTransaction(data: Record<string, any>, apiKey: string) {
-  const res = await ApiInstance.post('initialize', data, {
+  const res = await ApiInstance.post('/initialize', data, {
     headers: setAuthorizationHeader(apiKey)
   });
   return {
@@ -42,6 +42,17 @@ export async function getAllTransactions(options: Record<string, any>, apiKey: s
 
 export async function getTransaction(id: string, apiKey: string) {
   const res = await ApiInstance.get(`/${id}`, {
+    headers: setAuthorizationHeader(apiKey)
+  });
+  return {
+    data: res.data,
+    headers: res.headers,
+    statusCode: res.status
+  };
+}
+
+export async function getTimeline(id: string, apiKey: string) {
+  const res = await ApiInstance.get(`timeline/${id}`, {
     headers: setAuthorizationHeader(apiKey)
   });
   return {

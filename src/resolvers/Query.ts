@@ -39,6 +39,20 @@ const Query: IResolverObject = {
       throw error;
     }
 
+  },
+  timeline: async (_par, { id }, { req, res }) => {
+    const apiKey = req.headers.authorization;
+
+    try {
+      const apiRes = await TransactionApi.getTimeline(id, apiKey);
+
+      setHeaders(apiRes.headers, res);
+
+      return buildResponse(apiRes.statusCode, apiRes.data);
+    } catch (error) {
+      throw error;
+    }
+
   }
 };
 
