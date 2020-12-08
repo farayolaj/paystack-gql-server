@@ -2,6 +2,11 @@ import express from 'express';
 
 type Headers = Record<string, string>;
 
+/**
+ * Set headers on an express response object
+ * @param headers Headers you want to set
+ * @param res Express response object
+ */
 export function setHeaders(headers: Headers, res: express.Response): void {
   Object.entries<string>(headers).forEach(([headerKey, headerValue]) => {
     if (!res.headersSent) res.setHeader(headerKey, headerValue);
@@ -23,6 +28,11 @@ type GQLResponse = {
   meta?: Record<string, any>
 }
 
+/**
+ * Build up a response to correspond with the general response format as described in the schema
+ * @param statusCode Status code fro Paystack response
+ * @param res Response from Paystack API
+ */
 export function buildResponse(statusCode: number, res: PaystackResponse): GQLResponse {
   const out = {
     statusCode,
