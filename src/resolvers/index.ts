@@ -11,7 +11,7 @@ import PSubscription from './PSubscription';
 import Transaction from './Transaction';
 import TransactionInitialization from './TransactionInitialization';
 import TransactionLog from './TransactionLog';
-import TransactionTotals from './TransactionTotals';
+import TransactionTotal from './TransactionTotal';
 
 export default { 
   Authorization,
@@ -27,5 +27,5 @@ export default {
   Transaction, 
   TransactionInitialization, 
   TransactionLog,
-  TransactionTotals
+  TransactionTotal
 };

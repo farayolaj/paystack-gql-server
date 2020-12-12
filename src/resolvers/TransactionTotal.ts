@@ -1,6 +1,6 @@
 import { IResolverObject } from "apollo-server-express";
 
-const TransactionTotals: IResolverObject = {
+const TransactionTotal: IResolverObject = {
   totalTransactions: par => par.total_transactions,
   uniqueCustomers: par => par.unique_customers,
   totalVolume: par => par.total_volume,
@@ -9,4 +9,4 @@ const TransactionTotals: IResolverObject = {
   pendingTransfersByCurrency: par => par.pending_transfers_by_currency
 };
 
-export default TransactionTotals;
+export default TransactionTotal;
