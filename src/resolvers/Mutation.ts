@@ -14,6 +14,30 @@ const Mutation: IResolverObject = {
     } catch (error) {
       throw error;
     }
+  },
+  checkAuthorization: async (_par, { options }, { req, res }) => {
+    options = objKeysToSnakeCase(options);
+    const apiKey = req.headers.authorization;
+    try {
+      const apiRes = await TransactionApi.checkAuthorization(options, apiKey);
+
+      setHeaders(apiRes.headers, res);
+      return buildResponse(apiRes.statusCode, apiRes.data);
+    } catch (error) {
+      throw error;
+    }
+  },
+  chargeAuthorization: async (_par, { options }, { req, res }) => {
+    options = objKeysToSnakeCase(options);
+    const apiKey = req.headers.authorization;
+    try {
+      const apiRes = await TransactionApi.chargeAuthorization(options, apiKey);
+
+      setHeaders(apiRes.headers, res);
+      return buildResponse(apiRes.statusCode, apiRes.data);
+    } catch (error) {
+      throw error;
+    }
   }
 }
 
