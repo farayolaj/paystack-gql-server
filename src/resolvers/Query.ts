@@ -40,11 +40,11 @@ const Query: IResolverObject = {
     }
 
   },
-  timeline: async (_par, { id }, { req, res }) => {
+  timeline: async (_par, { id, reference }, { req, res }) => {
     const apiKey = req.headers.authorization;
 
     try {
-      const apiRes = await TransactionApi.getTimeline(id, apiKey);
+      const apiRes = await TransactionApi.getTimeline(id || reference, apiKey);
 
       setHeaders(apiRes.headers, res);
 
@@ -53,7 +53,37 @@ const Query: IResolverObject = {
       throw error;
     }
 
-  }
+  },
+  transactionTotals: async (_par, { paging, filter }, { req, res }) => {
+    const apiKey = req.headers.authorization;
+
+    const options = { ...paging, ...filter };
+
+    try {
+      const apiRes = await TransactionApi.getTotals(options, apiKey);
+
+      setHeaders(apiRes.headers, res);
+
+      return buildResponse(apiRes.statusCode, apiRes.data);
+    } catch (error) {
+      throw error;
+    }
+  },
+  exportTransactions: async (_par, { paging, filter, options }, { req, res }) => {
+    options = objKeysToSnakeCase(options);
+    const apiKey = req.headers.authorization;
+    options = { ...paging, ...filter, ...options };
+
+    try {
+      const apiRes = await TransactionApi.exportTransactions(options, apiKey);
+
+      setHeaders(apiRes.headers, res);
+
+      return buildResponse(apiRes.statusCode, apiRes.data);
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 export default Query;
